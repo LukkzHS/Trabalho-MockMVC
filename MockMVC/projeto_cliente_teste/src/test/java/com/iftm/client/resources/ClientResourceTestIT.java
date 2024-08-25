@@ -1,8 +1,10 @@
 package com.iftm.client.resources;
 
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -120,5 +122,32 @@ public class ClientResourceTestIT {
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value("Resource not found"));
+    }
+    
+    @Test
+    public void insert_ShouldCreateClient_WhenDataIsValid() throws Exception {
+        ClientDTO clientDTO = new ClientDTO(null, "InsereCliente", "12345678900", 5000.0,
+                Instant.parse("1985-10-20T07:50:00Z"), 1);
+        String json = objectMapper.writeValueAsString(clientDTO);
+
+        mockMvc.perform(post("/clients/")
+                .content(json)
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").exists())
+                .andExpect(jsonPath("$.name").value("InsereCliente"));
+    }
+
+    @Test
+    public void delete_ShouldReturnNoContent_WhenIdExists() throws Exception {
+        mockMvc.perform(delete("/clients/{id}", existingId))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    public void delete_ShouldReturnNotFound_WhenIdDoesNotExist() throws Exception {
+        mockMvc.perform(delete("/clients/{id}", nonExistingId))
+                .andExpect(status().isNotFound());
     }
 }
