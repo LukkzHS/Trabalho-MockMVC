@@ -93,5 +93,32 @@ public class ClientResourceTestIT {
                 .andExpect(jsonPath("$.content").isArray())
                 .andExpect(jsonPath("$.content[0].income").value(income));
     }
+    
+    @Test
+    public void update_ShouldReturnUpdatedClient_WhenIdExists() throws Exception {
+        ClientDTO clientDTO = new ClientDTO(null, "Atualiza Cliente", "12345678900", 5000.0,
+                Instant.parse("1985-10-20T07:50:00Z"), 1);
+        String json = objectMapper.writeValueAsString(clientDTO);
 
+        mockMvc.perform(put("/clients/{id}", existingId)
+                .content(json)
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Atualiza Cliente"));
+    }
+
+    @Test
+    public void update_ShouldReturnNotFound_WhenIdDoesNotExist() throws Exception {
+        ClientDTO clientDTO = new ClientDTO(null, "Non-Existent", "12345678900", 5000.0,
+                Instant.parse("1985-10-20T07:50:00Z"), 1);
+        String json = objectMapper.writeValueAsString(clientDTO);
+
+        mockMvc.perform(put("/clients/{id}", nonExistingId)
+                .content(json)
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("Resource not found"));
+    }
 }
