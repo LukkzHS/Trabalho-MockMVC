@@ -1,13 +1,14 @@
 package com.iftm.client.resources;
 
-
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import java.time.Instant;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -52,7 +53,7 @@ public class ClientResourceTestIT {
 
         // EXTRAIR ID CRIADO
         existingId = objectMapper.readTree(response).path("id").asLong();
-        nonExistingId = 999L;  // ID QUE NAO EXISTE
+        nonExistingId = 999L; // ID QUE NAO EXISTE
     }
 
     @Test
@@ -95,57 +96,8 @@ public class ClientResourceTestIT {
                 .andExpect(jsonPath("$.content").isArray())
                 .andExpect(jsonPath("$.content[0].income").value(income));
     }
-    
-    @Test
-    public void update_ShouldReturnUpdatedClient_WhenIdExists() throws Exception {
-        ClientDTO clientDTO = new ClientDTO(null, "Atualiza Cliente", "12345678900", 5000.0,
-                Instant.parse("1985-10-20T07:50:00Z"), 1);
-        String json = objectMapper.writeValueAsString(clientDTO);
-
-        mockMvc.perform(put("/clients/{id}", existingId)
-                .content(json)
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("Atualiza Cliente"));
-    }
 
     @Test
-    public void update_ShouldReturnNotFound_WhenIdDoesNotExist() throws Exception {
-        ClientDTO clientDTO = new ClientDTO(null, "Non-Existent", "12345678900", 5000.0,
-                Instant.parse("1985-10-20T07:50:00Z"), 1);
-        String json = objectMapper.writeValueAsString(clientDTO);
-
-        mockMvc.perform(put("/clients/{id}", nonExistingId)
-                .content(json)
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.error").value("Resource not found"));
-    }
-    
-    @Test
-    public void insert_ShouldCreateClient_WhenDataIsValid() throws Exception {
-        ClientDTO clientDTO = new ClientDTO(null, "InsereCliente", "12345678900", 5000.0,
-                Instant.parse("1985-10-20T07:50:00Z"), 1);
-        String json = objectMapper.writeValueAsString(clientDTO);
-
-        mockMvc.perform(post("/clients/")
-                .content(json)
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").exists())
-                .andExpect(jsonPath("$.name").value("InsereCliente"));
-    }
-
-    @Test
-    public void delete_ShouldReturnNoContent_WhenIdExists() throws Exception {
-        mockMvc.perform(delete("/clients/{id}", existingId))
-                .andExpect(status().isNoContent());
-    }
-
-@Test
     public void findByIncomeGreaterThan_ShouldReturnClients_WhenIncomeIsGreaterThanValue() throws Exception {
         double income = 3000.0;
 
@@ -178,11 +130,58 @@ public class ClientResourceTestIT {
                 .andExpect(jsonPath("$.content[0].cpf").value(startsWith(cpf)));
     }
 
-    
+    @Test
+    public void insert_ShouldCreateClient_WhenDataIsValid() throws Exception {
+        ClientDTO clientDTO = new ClientDTO(null, "InsereCliente", "12345678900", 5000.0,
+                Instant.parse("1985-10-20T07:50:00Z"), 1);
+        String json = objectMapper.writeValueAsString(clientDTO);
+
+        mockMvc.perform(post("/clients/")
+                .content(json)
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").exists())
+                .andExpect(jsonPath("$.name").value("InsereCliente"));
+    }
+
+    @Test
+    public void delete_ShouldReturnNoContent_WhenIdExists() throws Exception {
+        mockMvc.perform(delete("/clients/{id}", existingId))
+                .andExpect(status().isNoContent());
+    }
 
     @Test
     public void delete_ShouldReturnNotFound_WhenIdDoesNotExist() throws Exception {
         mockMvc.perform(delete("/clients/{id}", nonExistingId))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void update_ShouldReturnUpdatedClient_WhenIdExists() throws Exception {
+        ClientDTO clientDTO = new ClientDTO(null, "Atualiza Cliente", "12345678900", 5000.0,
+                Instant.parse("1985-10-20T07:50:00Z"), 1);
+        String json = objectMapper.writeValueAsString(clientDTO);
+
+        mockMvc.perform(put("/clients/{id}", existingId)
+                .content(json)
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Atualiza Cliente"));
+    }
+
+    @Test
+    public void update_ShouldReturnNotFound_WhenIdDoesNotExist() throws Exception {
+        ClientDTO clientDTO = new ClientDTO(null, "Non-Existent", "12345678900", 5000.0,
+                Instant.parse("1985-10-20T07:50:00Z"), 1);
+        String json = objectMapper.writeValueAsString(clientDTO);
+
+        mockMvc.perform(put("/clients/{id}", nonExistingId)
+                .content(json)
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("Resource not found"));
     }
 }
