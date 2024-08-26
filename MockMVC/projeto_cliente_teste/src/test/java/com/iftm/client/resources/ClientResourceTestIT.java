@@ -145,6 +145,41 @@ public class ClientResourceTestIT {
                 .andExpect(status().isNoContent());
     }
 
+@Test
+    public void findByIncomeGreaterThan_ShouldReturnClients_WhenIncomeIsGreaterThanValue() throws Exception {
+        double income = 3000.0;
+
+        mockMvc.perform(get("/clients/incomeGreaterThan/")
+                .param("income", String.valueOf(income)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content[0].income").value(greaterThan(income)));
+    }
+
+    @Test
+    public void findByCPFLike_ShouldReturnClients_WhenCpfMatchesPattern() throws Exception {
+        clientDTO = new ClientDTO(null, "Teste CPF", "10919444522", 3000.0,
+                Instant.parse("1990-01-01T00:00:00Z"), 0);
+        String json = objectMapper.writeValueAsString(clientDTO);
+
+        mockMvc.perform(post("/clients/")
+                .content(json)
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isCreated());
+
+        String cpf = "109194445";
+        mockMvc.perform(get("/clients/cpf/")
+                .param("cpf", cpf))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(greaterThan(0)))
+                .andExpect(jsonPath("$.content[0].cpf").value(startsWith(cpf)));
+    }
+
+    
+
     @Test
     public void delete_ShouldReturnNotFound_WhenIdDoesNotExist() throws Exception {
         mockMvc.perform(delete("/clients/{id}", nonExistingId))
